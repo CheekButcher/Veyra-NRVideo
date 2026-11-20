@@ -1,0 +1,28 @@
+name: Series X quick-setup checks
+
+on:
+  push:
+    branches: [feature/seriesx-quick-setup]
+  pull_request:
+    paths:
+      - "qml/Veyra/SeriesXQuick*"
+      - "qml/Veyra/XboxSourceDialog.qml"
+      - "src/xbox/WebRtcSession.cpp"
+      - "tests/seriesx/**"
+      - ".github/workflows/seriesx-quick-checks.yml"
+
+jobs:
+  preset-and-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify one-click quick-setup behavior
+        run: node tests/seriesx/quick-setup.test.cjs
+      - name: Verify UI and Xbox protocol source contract
+        run: python tests/seriesx/check_layout.py
