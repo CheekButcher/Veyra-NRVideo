@@ -26,3 +26,19 @@ jobs:
         run: node tests/seriesx/quick-setup.test.cjs
       - name: Verify UI and Xbox protocol source contract
         run: python tests/seriesx/check_layout.py
+
+  qml-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "tests/seriesx/requirements-qml.txt"
+      - name: Install Qt 6 Python bindings
+        run: python -m pip install -r tests/seriesx/requirements-qml.txt
+      - name: Load Series X component with real Qt QML engine
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python tests/seriesx/qml_smoke.py
