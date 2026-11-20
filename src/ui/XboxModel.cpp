@@ -65,6 +65,7 @@ void XboxModel::loadSettings() {
     lastName_ = o.value("lastName").toString();
     gamepad_ = o.value("gamepad").toBool(true);
     softwareDecode_ = o.value("softwareDecode").toBool(false);
+    requestedHeight_ = o.value("resolution").toInt(1080) == 1440 ? 1440 : 1080;
 }
 
 void XboxModel::saveSettings() const {
@@ -72,7 +73,7 @@ void XboxModel::saveSettings() const {
     std::filesystem::create_directories(xbox::dataDirectory(), ec);
     QSaveFile file(settingsPath());
     if (!file.open(QIODevice::WriteOnly)) return;
-    file.write(QJsonDocument(QJsonObject{{"lastConsole", lastId_}, {"lastName", lastName_}, {"gamepad", gamepad_}, {"softwareDecode", softwareDecode_}}).toJson());
+    file.write(QJsonDocument(QJsonObject{{"lastConsole", lastId_}, {"lastName", lastName_}, {"gamepad", gamepad_}, {"softwareDecode", softwareDecode_}, {"resolution", requestedHeight_}}).toJson());
     file.commit();
 }
 
@@ -80,7 +81,7 @@ QVariantMap XboxModel::state() const {
     return QVariantMap{
         {"signedIn", account_->signedIn()}, {"busy", busy_}, {"status", status_}, {"code", code_},
         {"verificationUri", verificationUri_}, {"signingIn", signingIn_}, {"selected", selected_}, {"gamepad", gamepad_},
-        {"streaming", streamActive_}, {"stream", stream_}, {"lastLabel", lastName_}, {"softwareDecode", softwareDecode_},
+        {"streaming", streamActive_}, {"stream", stream_}, {"lastLabel", lastName_}, {"softwareDecode", softwareDecode_}, {"requestedHeight", requestedHeight_},
     };
 }
 
@@ -206,6 +207,11 @@ void XboxModel::select(const QString& id) {
 bool XboxModel::set(const QString& key, const QVariant& value) {
     if (key == "gamepad") { gamepad_ = value.toBool(); saveSettings(); emit changed(); return true; }
     if (key == "softwareDecode") { softwareDecode_ = value.toBool(); saveSettings(); emit changed(); return true; }
+    if (key == "resolution") {
+        const int height = value.toInt();
+        if (height != 1080 && height != 1440) return false;
+        requestedHeight_ = height; saveSettings(); emit changed(); return true;
+    }
     return false;
 }
 
@@ -218,6 +224,8 @@ bool XboxModel::launchConsole(const QString& id, const QString& name) {
     launch.desc.consoleName = name.toStdString();
     launch.desc.gamepad = gamepad_;
     launch.desc.softwareDecode = softwareDecode_;
+    launch.desc.requestedWidth = requestedHeight_ == 1440 ? 2560 : 1920;
+    launch.desc.requestedHeight = uint32_t(requestedHeight_);
     launch.label = name.isEmpty() ? QStringLiteral("Xbox") : name;
     if (!launch_(std::move(launch))) { status_ = tr("无法开始串流，请查看日志。"); emit changed(); return false; }
     lastId_ = id;

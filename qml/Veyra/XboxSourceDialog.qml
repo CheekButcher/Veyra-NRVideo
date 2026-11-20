@@ -144,5 +144,12 @@ DialogLayer {
             VSwitch { objectName: "xbox-software-decode"; checked: xbDialog.st.softwareDecode === true; onToggled: checked => xbDialog.xb.set("softwareDecode", checked) }
         }
     }
+    SeriesXQuickControls {
+        objectName: "seriesx-quick-controls"
+        Layout.fillWidth: true
+        backend: veyra
+        xboxModel: xbDialog.xb
+        xboxState: xbDialog.st
+    }
     DialogNote { objectName: "xbox-status"; visible: (xbDialog.st.status || "").length > 0; text: (xbDialog.st.busy ? qsTr("处理中 · ") : "") + (xbDialog.st.status || "") }
 }
