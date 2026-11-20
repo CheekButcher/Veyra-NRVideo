@@ -65,6 +65,7 @@ private:
     std::shared_ptr<xbox::Account> account_;
     QVariantList consoles_;
     QString selected_, status_, code_, verificationUri_, lastId_, lastName_;
+    int requestedHeight_ = 1080; // Opt-in 1440p; never claim success until received dimensions confirm it
     bool busy_ = false, gamepad_ = true, softwareDecode_ = false, loaded_ = false, streamActive_ = false, signingIn_ = false;
     QVariantMap stream_;
     std::atomic<bool> cancel_{false};

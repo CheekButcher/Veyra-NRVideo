@@ -326,6 +326,10 @@ void XboxSessionSource::run(XboxConnectDesc desc) {
             log::warn("xbox-disconnect", std::format("reason={} reconnectable={}", reason, xbox::reconnectableDisconnect(reason)));
             q.ended = true;
         };
+        // Applies only to this connection. The decoded frame reports actual dimensions.
+        p.rtc.setClientDimensions(p.desc.requestedWidth, p.desc.requestedHeight);
+        p.width = p.rtc.clientDimensions().first;
+        p.height = p.rtc.clientDimensions().second;
         p.rtc.setCallbacks(std::move(callbacks));
 
         // Audio output: stereo float at 48 kHz.

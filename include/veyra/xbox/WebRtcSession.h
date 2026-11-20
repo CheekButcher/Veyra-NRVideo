@@ -13,6 +13,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "veyra/xbox/Protocol.h"
 #include "veyra/xbox/StreamApi.h"
@@ -61,6 +62,14 @@ public:
     void setCallbacks(WebRtcCallbacks callbacks) { callbacks_ = std::move(callbacks); }
     // Tests: gather candidates on this address only (e.g. "127.0.0.1"). Empty: every interface.
     void setBindAddress(std::string address) { bindAddress_ = std::move(address); }
+    // Client metadata request only. Xbox's real output may be lower.
+    void setClientDimensions(uint32_t width, uint32_t height) {
+        if ((width == 1920 && height == 1080) || (width == 2560 && height == 1440)) {
+            clientWidth_ = width;
+            clientHeight_ = height;
+        }
+    }
+    std::pair<uint32_t, uint32_t> clientDimensions() const { return {clientWidth_, clientHeight_}; }
 
     // Offer, signalling, ICE; returns once connected, false (with `error`) on failure or timeout.
     bool start(Signaling& signaling, std::string* error, std::chrono::milliseconds timeout = std::chrono::seconds(20));
@@ -105,6 +114,7 @@ private:
     std::chrono::steady_clock::time_point origin_ = std::chrono::steady_clock::now();
     std::string failure_;
     std::string bindAddress_;
+    uint32_t clientWidth_ = 1920, clientHeight_ = 1080;
 };
 
 } // namespace veyra::xbox

@@ -316,6 +316,8 @@ public:
                     const json j = json::parse(text);
                     std::lock_guard l(mutex);
                     messages.push_back(j.value("type", "") + " " + j.value("target", ""));
+                    if (j.value("target", "") == "/streaming/characteristics/dimensionschanged")
+                        requestedDimensions.push_back(j.value("content", ""));
                     if (j.value("type", "") == "Handshake") {
                         const std::string ack = json{{"type", "HandshakeAck"}, {"id", j.value("id", "")}, {"cv", ""}}.dump();
                         message->send(ack);
@@ -381,7 +383,7 @@ public:
     std::vector<std::shared_ptr<rtc::DataChannel>> channels;
     std::mutex mutex;
     std::condition_variable cv;
-    std::vector<std::string> labels, messages, control;
+    std::vector<std::string> labels, messages, control, requestedDimensions;
     std::vector<std::vector<uint8_t>> reports;
     std::string offerSdp;
 };
@@ -395,6 +397,11 @@ std::vector<uint8_t> nal(uint8_t header, size_t size, uint8_t seed) {
 void webrtcTests() {
     FakeConsole console;
     WebRtcSession session;
+    check(session.clientDimensions() == std::pair<uint32_t, uint32_t>{1920, 1080}, "Xbox default request is 1080p");
+    session.setClientDimensions(3000, 2000);
+    check(session.clientDimensions() == std::pair<uint32_t, uint32_t>{1920, 1080}, "unsupported dimension request rejected");
+    session.setClientDimensions(2560, 1440);
+    check(session.clientDimensions() == std::pair<uint32_t, uint32_t>{2560, 1440}, "1440p request accepted");
     session.setBindAddress("127.0.0.1");
     std::mutex m;
     std::vector<std::vector<uint8_t>> units;
@@ -439,6 +446,17 @@ void webrtcTests() {
         for (const auto& s : console.messages) if (s.find("/streaming/characteristics/dimensionschanged") != std::string::npos) return true;
         return false;
     }), "the client sends its configuration messages");
+    {
+        std::lock_guard l(console.mutex);
+        bool requested1440 = false;
+        for (const auto& payload : console.requestedDimensions) {
+            const json dims = json::parse(payload, nullptr, false);
+            if (dims.is_object() && dims.value("horizontal", 0) == 2560 && dims.value("vertical", 0) == 1440
+                    && dims.value("preferredWidth", 0) == 2560 && dims.value("preferredHeight", 0) == 1440)
+                requested1440 = true;
+        }
+        check(requested1440, "1440p request reaches the Xbox dimensionschanged protocol message");
+    }
 
     GamepadFrame pad;
     pad.buttons = BtnA;
