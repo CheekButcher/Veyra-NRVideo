@@ -23,8 +23,8 @@ fixture = component.create()
 if fixture is None:
     raise AssertionError("QML create failed:\n" + "\n".join(e.toString() for e in component.errors()))
 app.processEvents()
-quick = fixture.property("quick")
-backend = fixture.property("engineState")
+quick = fixture.findChild(QObject, "test-seriesx-quick")
+backend = fixture.findChild(QObject, "test-seriesx-engine")
 assert quick is not None and backend is not None, "Expected bound controls and fake backend"
 assert backend.property("fgEnabled") is False
 assert QMetaObject.invokeMethod(quick, "applyPreset", Qt.ConnectionType.DirectConnection)
