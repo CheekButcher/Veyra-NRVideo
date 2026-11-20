@@ -11,6 +11,7 @@ Item {
 
     QtObject {
         id: testEngine
+        objectName: "test-seriesx-engine"
         property bool fgEnabled: false
         property string fgBackendName: "xess"
         property var fgBackendChoices: [
@@ -29,6 +30,7 @@ Item {
     }
     QtObject {
         id: testXbox
+        objectName: "test-seriesx-console"
         property var state: ({requestedHeight:1080, streaming:false, stream:({})})
         function set(name,value) {
             if (name !== "resolution" || (value !== 1080 && value !== 1440)) return false
@@ -38,6 +40,7 @@ Item {
     }
     SeriesXQuickControls {
         id: controls
+        objectName: "test-seriesx-quick"
         anchors.fill: parent
         backend: testEngine
         xboxModel: testXbox
